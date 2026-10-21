@@ -15,16 +15,19 @@ python -m pip install -r requirements.txt
 
 ## Supported functionality
 
-The calculator currently supports addition and subtraction. Each operation
-takes two numeric operands.
+The calculator supports addition, subtraction, multiplication, and division.
+Each operation takes two numeric operands. Division by zero raises a
+`ZeroDivisionError`.
 
 ## Usage
 
 ```python
-from app.operations import add, subtract
+from app.operations import add, divide, multiply, subtract
 
 print(add(2, 3))       # 5
 print(subtract(5, 2))  # 3
+print(multiply(4, 3))  # 12
+print(divide(9, 2))    # 4.5
 ```
 
 ## Testing
