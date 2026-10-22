@@ -4,10 +4,14 @@ import pytest
 
 from app.exceptions import OperationError
 from app.operations import (
+    AbsoluteDifferenceOperation,
     AddOperation,
     DivideOperation,
+    IntegerDivisionOperation,
+    ModulusOperation,
     MultiplyOperation,
     OperationFactory,
+    PercentOperation,
     PowerOperation,
     RootOperation,
     SubtractOperation,
@@ -23,6 +27,10 @@ from app.operations import (
         ("divide", DivideOperation, 2 / 3),
         ("power", PowerOperation, 8),
         ("root", RootOperation, 2 ** (1 / 3)),
+        ("modulus", ModulusOperation, 2),
+        ("int_divide", IntegerDivisionOperation, 0),
+        ("percent", PercentOperation, 200 / 3),
+        ("abs_diff", AbsoluteDifferenceOperation, 1),
     ],
 )
 def test_factory_creates_basic_operations(name, operation_type, expected):

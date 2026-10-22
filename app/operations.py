@@ -24,7 +24,7 @@ def multiply(first: float, second: float) -> float:
 def divide(first: float, second: float) -> float:
     """Return the quotient, rejecting a zero divisor."""
     if second == 0:
-        raise ZeroDivisionError("Cannot divide by zero.")
+        raise OperationError("Cannot divide by zero.")
     return first / second
 
 
@@ -55,6 +55,32 @@ def root(first: float, second: float) -> float:
             raise OperationError("A negative radicand requires an odd integer degree.")
         return -power(-first, 1 / degree)
     return power(first, 1 / second)
+
+
+def modulus(first: float, second: float) -> float:
+    """Return Python's remainder after division."""
+    if second == 0:
+        raise OperationError("Cannot calculate modulus with a zero divisor.")
+    return first % second
+
+
+def int_divide(first: float, second: float) -> int:
+    """Return the quotient with its fractional part truncated toward zero."""
+    if second == 0:
+        raise OperationError("Cannot perform integer division by zero.")
+    return math.trunc(first / second)
+
+
+def percent(first: float, second: float) -> float:
+    """Return the first number as a percentage of the second."""
+    if second == 0:
+        raise OperationError("Cannot calculate a percentage with a zero denominator.")
+    return (first / second) * 100
+
+
+def abs_diff(first: float, second: float) -> float:
+    """Return the absolute difference between the operands."""
+    return abs(first - second)
 
 
 class Operation(Protocol):
@@ -93,6 +119,26 @@ class RootOperation:
         return root(first, second)
 
 
+class ModulusOperation:
+    def execute(self, first: float, second: float) -> float:
+        return modulus(first, second)
+
+
+class IntegerDivisionOperation:
+    def execute(self, first: float, second: float) -> int:
+        return int_divide(first, second)
+
+
+class PercentOperation:
+    def execute(self, first: float, second: float) -> float:
+        return percent(first, second)
+
+
+class AbsoluteDifferenceOperation:
+    def execute(self, first: float, second: float) -> float:
+        return abs_diff(first, second)
+
+
 class OperationFactory:
     """Create an operation object from its user-facing name."""
 
@@ -103,6 +149,10 @@ class OperationFactory:
         "divide": DivideOperation,
         "power": PowerOperation,
         "root": RootOperation,
+        "modulus": ModulusOperation,
+        "int_divide": IntegerDivisionOperation,
+        "percent": PercentOperation,
+        "abs_diff": AbsoluteDifferenceOperation,
     }
 
     @classmethod

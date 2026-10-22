@@ -16,15 +16,19 @@ python -m pip install -r requirements.txt
 ## Supported functionality
 
 The calculator supports addition, subtraction, multiplication, division, power,
-and root.
+root, modulus, integer division (`int_divide`), percentage (`percent`), and
+absolute difference (`abs_diff`).
 Each operation takes two numeric operands. `OperationFactory.create()` selects
 an operation by name, ignoring surrounding spaces and letter case. Unsupported
-names raise `OperationError`. Division by zero raises a `ZeroDivisionError`.
+names and zero denominators raise `OperationError`.
 
 `power(a, b)` raises `a` to `b`. A negative base requires an integer exponent;
 `power(0, 0)` returns 1. `root(a, b)` calculates the `b`-th root of `a`.
 Negative radicands require odd integer degrees. A zero degree, a negative
 degree applied to zero, complex-valued results, and overflow are rejected.
+`modulus(a, b)` follows Python's `%` remainder rule, so the result takes the
+divisor's sign. `int_divide(a, b)` truncates the quotient toward zero, making
+`int_divide(-7, 2)` return `-3`. `percent(a, b)` returns `(a / b) * 100`.
 
 ## Usage
 
