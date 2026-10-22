@@ -4,33 +4,45 @@ import math
 from typing import Protocol
 
 from app.exceptions import OperationError
+from app.input_validators import validate_operands
+
+
+def _finite_result(result: float) -> float:
+    if not math.isfinite(result):
+        raise OperationError("Result is too large for a finite real number.")
+    return result
 
 
 def add(first: float, second: float) -> float:
     """Return the sum of the operands."""
-    return first + second
+    first, second = validate_operands(first, second)
+    return _finite_result(first + second)
 
 
 def subtract(first: float, second: float) -> float:
     """Return the first operand minus the second."""
-    return first - second
+    first, second = validate_operands(first, second)
+    return _finite_result(first - second)
 
 
 def multiply(first: float, second: float) -> float:
     """Return the product of the operands."""
-    return first * second
+    first, second = validate_operands(first, second)
+    return _finite_result(first * second)
 
 
 def divide(first: float, second: float) -> float:
     """Return the quotient, rejecting a zero divisor."""
+    first, second = validate_operands(first, second)
     if second == 0:
         raise OperationError("Cannot divide by zero.")
-    return first / second
+    return _finite_result(first / second)
 
 
 def power(first: float, second: float) -> float:
     """Raise the first operand to the second within the real-number domain."""
-    if first < 0 and not float(second).is_integer():
+    first, second = validate_operands(first, second)
+    if first < 0 and not second.is_integer():
         raise OperationError("A negative base requires an integer exponent.")
     if first == 0 and second < 0:
         raise OperationError("Zero cannot be raised to a negative exponent.")
@@ -38,49 +50,51 @@ def power(first: float, second: float) -> float:
         result = math.pow(first, second)
     except (ValueError, OverflowError) as error:
         raise OperationError("Power result is undefined or too large.") from error
-    if not math.isfinite(result):
-        raise OperationError("Power result must be finite.")
-    return result
+    return _finite_result(result)
 
 
 def root(first: float, second: float) -> float:
     """Return the second operand's root of the first, when real-valued."""
+    first, second = validate_operands(first, second)
     if second == 0:
         raise OperationError("Root degree cannot be zero.")
     if first == 0 and second < 0:
         raise OperationError("Zero cannot have a negative root degree.")
     if first < 0:
-        degree = float(second)
-        if not degree.is_integer() or int(degree) % 2 == 0:
+        if not second.is_integer() or int(second) % 2 == 0:
             raise OperationError("A negative radicand requires an odd integer degree.")
-        return -power(-first, 1 / degree)
-    return power(first, 1 / second)
+        return -power(-first, _finite_result(1 / second))
+    return power(first, _finite_result(1 / second))
 
 
 def modulus(first: float, second: float) -> float:
     """Return Python's remainder after division."""
+    first, second = validate_operands(first, second)
     if second == 0:
         raise OperationError("Cannot calculate modulus with a zero divisor.")
-    return first % second
+    return _finite_result(first % second)
 
 
 def int_divide(first: float, second: float) -> int:
     """Return the quotient with its fractional part truncated toward zero."""
+    first, second = validate_operands(first, second)
     if second == 0:
         raise OperationError("Cannot perform integer division by zero.")
-    return math.trunc(first / second)
+    return math.trunc(_finite_result(first / second))
 
 
 def percent(first: float, second: float) -> float:
     """Return the first number as a percentage of the second."""
+    first, second = validate_operands(first, second)
     if second == 0:
         raise OperationError("Cannot calculate a percentage with a zero denominator.")
-    return (first / second) * 100
+    return _finite_result((first / second) * 100)
 
 
 def abs_diff(first: float, second: float) -> float:
     """Return the absolute difference between the operands."""
-    return abs(first - second)
+    first, second = validate_operands(first, second)
+    return _finite_result(abs(first - second))
 
 
 class Operation(Protocol):

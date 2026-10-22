@@ -1,5 +1,13 @@
-"""Errors raised by calculator operations."""
+"""Errors raised by the calculator's public API."""
 
 
-class OperationError(Exception):
-    """An operation name or calculation is not supported."""
+class CalculatorError(Exception):
+    """Base class for errors callers may handle together."""
+
+
+class ValidationError(CalculatorError):
+    """An operand cannot be used as a finite real number."""
+
+
+class OperationError(CalculatorError):
+    """An operation name or mathematical result is invalid."""

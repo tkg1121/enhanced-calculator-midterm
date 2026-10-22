@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.exceptions import OperationError
+from app.exceptions import CalculatorError, OperationError, ValidationError
 from app.operations import (
     abs_diff,
     add,
@@ -154,3 +154,57 @@ def test_absolute_difference(first, second, expected):
 def test_new_division_operations_reject_zero_denominator(operation):
     with pytest.raises(OperationError, match="zero"):
         operation(5, 0)
+
+
+@pytest.mark.parametrize(
+    "operation,expected",
+    [
+        (add, 5),
+        (subtract, -1),
+        (multiply, 6),
+        (divide, 2 / 3),
+        (power, 8),
+        (root, 2 ** (1 / 3)),
+        (modulus, 2),
+        (int_divide, 0),
+        (percent, 200 / 3),
+        (abs_diff, 1),
+    ],
+)
+def test_operations_accept_numeric_strings(operation, expected):
+    assert operation("2", "3") == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    "operation",
+    [add, subtract, multiply, divide, power, root, modulus, int_divide, percent, abs_diff],
+)
+@pytest.mark.parametrize("invalid", [None, "bad", True, float("nan"), float("inf")])
+def test_operations_reject_invalid_operands(operation, invalid):
+    with pytest.raises(ValidationError):
+        operation(invalid, 2)
+    with pytest.raises(ValidationError):
+        operation(2, invalid)
+
+
+@pytest.mark.parametrize(
+    "operation,first,second",
+    [
+        (add, 1e308, 1e308),
+        (subtract, -1e308, 1e308),
+        (multiply, 1e308, 2),
+        (divide, 1e308, 1e-308),
+        (int_divide, 1e308, 1e-308),
+        (percent, 1e308, 1e-308),
+        (abs_diff, 1e308, -1e308),
+        (root, 1e308, 1e-308),
+    ],
+)
+def test_nonfinite_results_raise_operation_error(operation, first, second):
+    with pytest.raises(OperationError):
+        operation(first, second)
+
+
+def test_error_types_share_calculator_base():
+    assert issubclass(ValidationError, CalculatorError)
+    assert issubclass(OperationError, CalculatorError)

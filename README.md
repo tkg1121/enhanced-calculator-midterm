@@ -20,7 +20,11 @@ root, modulus, integer division (`int_divide`), percentage (`percent`), and
 absolute difference (`abs_diff`).
 Each operation takes two numeric operands. `OperationFactory.create()` selects
 an operation by name, ignoring surrounding spaces and letter case. Unsupported
-names and zero denominators raise `OperationError`.
+names and zero denominators raise `OperationError`. Numeric strings such as
+`"2.5"` are accepted. Booleans, nonnumeric values, NaN, and infinity raise
+`ValidationError`. Results that overflow or are nonfinite raise
+`OperationError`. All operations use finite real numbers; no input-size limit
+is currently configured.
 
 `power(a, b)` raises `a` to `b`. A negative base requires an integer exponent;
 `power(0, 0)` returns 1. `root(a, b)` calculates the `b`-th root of `a`.
@@ -48,4 +52,5 @@ print(root(-27, 3))    # approximately -3
 
 ```powershell
 python -m pytest
+python -m pytest --cov=app --cov-report=term-missing
 ```

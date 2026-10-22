@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.exceptions import OperationError
+from app.exceptions import OperationError, ValidationError
 from app.operations import (
     AbsoluteDifferenceOperation,
     AddOperation,
@@ -47,3 +47,8 @@ def test_factory_creates_distinct_instances():
 def test_factory_rejects_unsupported_names(name):
     with pytest.raises(OperationError, match="operation|Operation"):
         OperationFactory.create(name)
+
+
+def test_factory_operation_validates_operands():
+    with pytest.raises(ValidationError):
+        OperationFactory.create("add").execute("nan", 2)
