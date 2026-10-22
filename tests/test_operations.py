@@ -2,7 +2,8 @@
 
 import pytest
 
-from app.operations import add, divide, multiply, subtract
+from app.exceptions import OperationError
+from app.operations import add, divide, multiply, power, root, subtract
 
 
 @pytest.mark.parametrize(
@@ -58,3 +59,49 @@ def test_divide(first, second, expected):
 def test_divide_by_zero(divisor):
     with pytest.raises(ZeroDivisionError, match="Cannot divide by zero"):
         divide(5, divisor)
+
+
+@pytest.mark.parametrize(
+    "base, exponent, expected",
+    [
+        (2, 3, 8),
+        (2, -2, 0.25),
+        (-2, 3, -8),
+        (4, 0.5, 2),
+        (0, 0, 1),
+    ],
+)
+def test_power(base, exponent, expected):
+    assert power(base, exponent) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    "radicand, degree, expected",
+    [
+        (16, 2, 4),
+        (27, 3, 3),
+        (-27, 3, -3),
+        (-8, -3, -0.5),
+        (16, -2, 0.25),
+        (0, 3, 0),
+    ],
+)
+def test_root(radicand, degree, expected):
+    assert root(radicand, degree) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    "operation,first,second,message",
+    [
+        (power, -2, 0.5, "integer exponent"),
+        (power, 0, -1, "negative exponent"),
+        (power, 1e308, 2, "too large"),
+        (root, 8, 0, "cannot be zero"),
+        (root, 0, -2, "negative root degree"),
+        (root, -16, 2, "odd integer degree"),
+        (root, -16, 2.5, "odd integer degree"),
+    ],
+)
+def test_power_and_root_domain_errors(operation, first, second, message):
+    with pytest.raises(OperationError, match=message):
+        operation(first, second)

@@ -8,6 +8,8 @@ from app.operations import (
     DivideOperation,
     MultiplyOperation,
     OperationFactory,
+    PowerOperation,
+    RootOperation,
     SubtractOperation,
 )
 
@@ -19,6 +21,8 @@ from app.operations import (
         (" SUBTRACT ", SubtractOperation, -1),
         ("multiply", MultiplyOperation, 6),
         ("divide", DivideOperation, 2 / 3),
+        ("power", PowerOperation, 8),
+        ("root", RootOperation, 2 ** (1 / 3)),
     ],
 )
 def test_factory_creates_basic_operations(name, operation_type, expected):
