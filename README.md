@@ -21,7 +21,8 @@ absolute difference (`abs_diff`).
 The `Calculator` class returns each numeric result and keeps completed
 calculations in chronological, in-memory history. Failed calculations leave
 history unchanged. `history` returns an immutable tuple of records, and
-`clear_history()` removes the current records.
+`clear_history()` removes the current records. A nonempty clear can be undone
+or redone; clearing empty history has no effect on undo or redo.
 Each operation takes two numeric operands. `OperationFactory.create()` selects
 an operation by name, ignoring surrounding spaces and letter case. Unsupported
 names and zero denominators raise `OperationError`. Numeric strings such as
@@ -60,8 +61,18 @@ from app.calculator import Calculator
 calculator = Calculator()
 print(calculator.calculate("add", 2, 3))
 print(calculator.history)
+calculator.undo()
+calculator.redo()
 calculator.clear_history()
 ```
+
+`calculator.undo()` restores history before the latest successful calculation
+or nonempty clear. `calculator.redo()` restores the undone state. Multiple undo
+and redo steps are supported. A new successful calculation or nonempty clear
+after undo discards the previous redo branch. A failed calculation leaves the
+history and undo/redo state unchanged. Calling undo or redo with no available
+state raises `OperationError` with a `Nothing to undo` or `Nothing to redo`
+message. Restoring history does not perform arithmetic again.
 
 ## Testing
 

@@ -16,6 +16,10 @@ class History:
         """Return an immutable view that cannot alter stored history."""
         return tuple(self._entries)
 
+    def restore(self, entries: tuple[Calculation, ...]) -> None:
+        """Replace live history with a fresh list of snapshot entries."""
+        self._entries = list(entries)
+
     def clear(self) -> bool:
         """Remove existing entries and report whether anything changed."""
         if not self._entries:
