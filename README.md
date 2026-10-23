@@ -18,6 +18,10 @@ python -m pip install -r requirements.txt
 The calculator supports addition, subtraction, multiplication, division, power,
 root, modulus, integer division (`int_divide`), percentage (`percent`), and
 absolute difference (`abs_diff`).
+The `Calculator` class returns each numeric result and keeps completed
+calculations in chronological, in-memory history. Failed calculations leave
+history unchanged. `history` returns an immutable tuple of records, and
+`clear_history()` removes the current records.
 Each operation takes two numeric operands. `OperationFactory.create()` selects
 an operation by name, ignoring surrounding spaces and letter case. Unsupported
 names and zero denominators raise `OperationError`. Numeric strings such as
@@ -46,6 +50,17 @@ print(divide(9, 2))    # 4.5
 print(OperationFactory.create("add").execute(2, 3))  # 5
 print(power(2, -2))    # 0.25
 print(root(-27, 3))    # approximately -3
+```
+
+To keep a calculation history:
+
+```python
+from app.calculator import Calculator
+
+calculator = Calculator()
+print(calculator.calculate("add", 2, 3))
+print(calculator.history)
+calculator.clear_history()
 ```
 
 ## Testing
