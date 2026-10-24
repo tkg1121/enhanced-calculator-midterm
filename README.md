@@ -115,6 +115,29 @@ clear, and load do not send calculation notifications. A file-I/O failure from
 an observer emits a warning, allows the other observers to run, and does not
 remove the successful calculation. Unrelated programming errors still raise.
 
+## Automatic saving
+
+Set `history_file` and `auto_save=True` to save the complete current history
+after every successful new calculation. The default is `auto_save=False`, so
+the constructor does not write a history file unless enabled. Both logging and
+CSV use the constructor's `encoding` value, which defaults to UTF-8. Manual
+save/load can override it with their own `encoding` argument.
+
+```python
+calculator = Calculator(
+    log_file="logs/calculator.log",
+    history_file="data/history.csv",
+    auto_save=True,
+)
+calculator.calculate("add", 2, 3)
+```
+
+Auto-save uses the same atomic CSV writer as manual save. It runs only for new
+successful calculations; undo, redo, clear, and load leave the last saved file
+alone until another calculation or manual save. If auto-save fails, the
+calculation remains in history, other observers still run, and a warning is
+emitted. Passing `auto_save=True` without `history_file` raises `ValueError`.
+
 ## Testing
 
 ```powershell

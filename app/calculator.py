@@ -9,19 +9,31 @@ from app.history import History
 from app.history_persistence import load_history, save_history
 from app.exceptions import PersistenceError
 from app.logger import Logger
-from app.observers import CalculationObserver, LoggingObserver
+from app.observers import AutoSaveObserver, CalculationObserver, LoggingObserver
 
 
 class Calculator:
     """Perform calculations and keep their successful results in order."""
 
-    def __init__(self, log_file: str | os.PathLike[str] | None = None, encoding: str = "utf-8") -> None:
+    def __init__(
+        self,
+        log_file: str | os.PathLike[str] | None = None,
+        encoding: str = "utf-8",
+        *,
+        history_file: str | os.PathLike[str] | None = None,
+        auto_save: bool = False,
+    ) -> None:
+        if auto_save and history_file is None:
+            raise ValueError("A history_file path is required when auto_save is enabled.")
         self._history = History()
         self._states = UndoRedo()
         self._observers: list[CalculationObserver] = []
+        self._encoding = encoding
         self._logger = Logger(log_file, encoding) if log_file is not None else None
         if self._logger is not None:
             self.add_observer(LoggingObserver(self._logger))
+        if history_file is not None:
+            self.add_observer(AutoSaveObserver(history_file, encoding, enabled=auto_save))
 
     @property
     def history(self) -> tuple[Calculation, ...]:
@@ -59,10 +71,10 @@ class Calculator:
         """Restore the most recently undone state."""
         self._restore(self._states.redo(self._snapshot()))
 
-    def save_history(self, path: str | os.PathLike[str], encoding: str = "utf-8") -> None:
+    def save_history(self, path: str | os.PathLike[str], encoding: str | None = None) -> None:
         """Persist the current state, including after undo, redo, or clear."""
         try:
-            save_history(self.history, path, encoding)
+            save_history(self.history, path, self._encoding if encoding is None else encoding)
         except PersistenceError as error:
             if self._logger is not None:
                 self._logger.error("History save failed for %s: %s", path, error)
@@ -70,10 +82,10 @@ class Calculator:
         if self._logger is not None:
             self._logger.info("Saved %s history records to %s", len(self.history), path)
 
-    def load_history(self, path: str | os.PathLike[str], encoding: str = "utf-8") -> None:
+    def load_history(self, path: str | os.PathLike[str], encoding: str | None = None) -> None:
         """Replace history and start a fresh undo/redo baseline after validation."""
         try:
-            entries = load_history(path, encoding)
+            entries = load_history(path, self._encoding if encoding is None else encoding)
         except PersistenceError as error:
             if self._logger is not None:
                 self._logger.error("History load failed for %s: %s", path, error)
