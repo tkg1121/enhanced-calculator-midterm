@@ -95,6 +95,26 @@ states unchanged. Loading does not run calculations again. Manual save writes
 the current state, including after undo, redo, or clear. File and record errors
 raise `PersistenceError`.
 
+## Logging and observers
+
+Pass `log_file` to `Calculator` to log completed calculations and history
+save/load events to that path. No log file is created by the default
+constructor. The optional `encoding` argument controls log text encoding;
+UTF-8 is the default.
+
+```python
+calculator = Calculator(log_file="logs/calculator.log")
+calculator.calculate("add", 2, 3)
+```
+
+Observers implement `on_calculation(record, calculator)` and can be registered
+with `add_observer()` or removed with `remove_observer()`. The same object is
+registered at most once. Observers run after each successful calculation is
+recorded and after undo/redo state is updated. Failed calculations, undo, redo,
+clear, and load do not send calculation notifications. A file-I/O failure from
+an observer emits a warning, allows the other observers to run, and does not
+remove the successful calculation. Unrelated programming errors still raise.
+
 ## Testing
 
 ```powershell
