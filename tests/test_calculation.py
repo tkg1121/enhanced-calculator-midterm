@@ -1,6 +1,7 @@
 """Tests for immutable calculation records."""
 
 from dataclasses import FrozenInstanceError
+from datetime import datetime, timezone
 
 import pytest
 
@@ -18,12 +19,16 @@ def test_create_completed_record(name, first, second, expected):
     assert record.first == float(first)
     assert record.second == float(second)
     assert record.result == pytest.approx(expected)
+    assert record.timestamp.tzinfo is not None
+    assert record.timestamp.utcoffset().total_seconds() == 0
 
 
 def test_record_cannot_be_changed():
     record = Calculation.create("add", 2, 3)
     with pytest.raises(FrozenInstanceError):
         record.result = 999
+    with pytest.raises(FrozenInstanceError):
+        record.timestamp = datetime.now(timezone.utc)
 
 
 @pytest.mark.parametrize(

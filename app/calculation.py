@@ -1,6 +1,7 @@
 """Immutable records of completed calculations."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 
 from app.input_validators import validate_operands
 from app.operations import OperationFactory
@@ -14,6 +15,7 @@ class Calculation:
     first: float
     second: float
     result: float | int
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @classmethod
     def create(cls, operation: str, first: object, second: object) -> "Calculation":

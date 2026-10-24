@@ -42,6 +42,7 @@ def test_multiple_undo_and_redo_restore_history_without_duplicate_entries():
     calculator = Calculator()
     calculator.calculate("add", 2, 3)
     calculator.calculate("multiply", 4, 5)
+    original = calculator.history
     calculator.undo()
     assert [entry.result for entry in calculator.history] == [5]
     calculator.undo()
@@ -50,6 +51,8 @@ def test_multiple_undo_and_redo_restore_history_without_duplicate_entries():
     assert [entry.result for entry in calculator.history] == [5]
     calculator.redo()
     assert [entry.result for entry in calculator.history] == [5, 20]
+    assert calculator.history == original
+    assert calculator.history[1] is original[1]
 
 
 def test_empty_undo_and_redo_raise_existing_custom_error():

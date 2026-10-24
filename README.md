@@ -20,7 +20,8 @@ root, modulus, integer division (`int_divide`), percentage (`percent`), and
 absolute difference (`abs_diff`).
 The `Calculator` class returns each numeric result and keeps completed
 calculations in chronological, in-memory history. Failed calculations leave
-history unchanged. `history` returns an immutable tuple of records, and
+history unchanged. Each record has a timezone-aware UTC creation timestamp.
+`history` returns an immutable tuple of records, and
 `clear_history()` removes the current records. A nonempty clear can be undone
 or redone; clearing empty history has no effect on undo or redo.
 Each operation takes two numeric operands. `OperationFactory.create()` selects
