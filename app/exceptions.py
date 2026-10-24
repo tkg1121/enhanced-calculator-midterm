@@ -11,3 +11,7 @@ class ValidationError(CalculatorError):
 
 class OperationError(CalculatorError):
     """An operation name or mathematical result is invalid."""
+
+
+class PersistenceError(CalculatorError):
+    """History could not be saved or loaded."""

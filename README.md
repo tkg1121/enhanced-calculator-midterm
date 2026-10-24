@@ -75,6 +75,26 @@ history and undo/redo state unchanged. Calling undo or redo with no available
 state raises `OperationError` with a `Nothing to undo` or `Nothing to redo`
 message. Restoring history does not perform arithmetic again.
 
+## CSV history
+
+Install pandas through `requirements.txt`. Save or load history with an explicit
+path; UTF-8 is the default encoding and both methods accept an `encoding`
+argument:
+
+```python
+calculator.save_history("data/history.csv")
+calculator.load_history("data/history.csv")
+```
+
+The CSV columns are `operation,first,second,result,timestamp`. Timestamps use
+ISO 8601 with a UTC offset. An empty history saves as a header-only CSV. Saving
+creates missing parent directories and replaces an existing file only after a
+complete write. A successful load validates all rows, replaces the current
+history, and clears the old undo and redo stacks. A failed load leaves those
+states unchanged. Loading does not run calculations again. Manual save writes
+the current state, including after undo, redo, or clear. File and record errors
+raise `PersistenceError`.
+
 ## Testing
 
 ```powershell
