@@ -4,6 +4,7 @@ import os
 import warnings
 
 from app.calculation import Calculation
+from app.calculator_config import CalculatorConfig
 from app.calculator_memento import CalculatorMemento, UndoRedo
 from app.history import History
 from app.history_persistence import load_history, save_history
@@ -18,17 +19,25 @@ class Calculator:
     def __init__(
         self,
         log_file: str | os.PathLike[str] | None = None,
-        encoding: str = "utf-8",
+        encoding: str | None = None,
         *,
         history_file: str | os.PathLike[str] | None = None,
-        auto_save: bool = False,
+        auto_save: bool | None = None,
+        config: CalculatorConfig | None = None,
     ) -> None:
+        log_file = log_file if log_file is not None else config.log_file if config is not None else None
+        history_file = history_file if history_file is not None else config.history_file if config is not None else None
+        auto_save = auto_save if auto_save is not None else config.auto_save if config is not None else False
+        encoding = encoding if encoding is not None else config.encoding if config is not None else "utf-8"
         if auto_save and history_file is None:
             raise ValueError("A history_file path is required when auto_save is enabled.")
         self._history = History()
         self._states = UndoRedo()
         self._observers: list[CalculationObserver] = []
         self._encoding = encoding
+        self._max_input_value = config.max_input_value if config is not None else None
+        self._precision = config.precision if config is not None else None
+        self._history_file = history_file
         self._logger = Logger(log_file, encoding) if log_file is not None else None
         if self._logger is not None:
             self.add_observer(LoggingObserver(self._logger))
@@ -41,7 +50,10 @@ class Calculator:
 
     def calculate(self, operation: str, first: object, second: object) -> float | int:
         """Return the numeric result and record one successful calculation."""
-        entry = Calculation.create(operation, first, second)
+        entry = Calculation.create(
+            operation, first, second,
+            max_input_value=self._max_input_value, precision=self._precision,
+        )
         self._states.record(self._snapshot())
         self._history.append(entry)
         self._notify(entry)
@@ -71,8 +83,11 @@ class Calculator:
         """Restore the most recently undone state."""
         self._restore(self._states.redo(self._snapshot()))
 
-    def save_history(self, path: str | os.PathLike[str], encoding: str | None = None) -> None:
+    def save_history(self, path: str | os.PathLike[str] | None = None, encoding: str | None = None) -> None:
         """Persist the current state, including after undo, redo, or clear."""
+        path = path if path is not None else self._history_file
+        if path is None:
+            raise ValueError("A history file path is required to save history.")
         try:
             save_history(self.history, path, self._encoding if encoding is None else encoding)
         except PersistenceError as error:
@@ -82,8 +97,11 @@ class Calculator:
         if self._logger is not None:
             self._logger.info("Saved %s history records to %s", len(self.history), path)
 
-    def load_history(self, path: str | os.PathLike[str], encoding: str | None = None) -> None:
+    def load_history(self, path: str | os.PathLike[str] | None = None, encoding: str | None = None) -> None:
         """Replace history and start a fresh undo/redo baseline after validation."""
+        path = path if path is not None else self._history_file
+        if path is None:
+            raise ValueError("A history file path is required to load history.")
         try:
             entries = load_history(path, self._encoding if encoding is None else encoding)
         except PersistenceError as error:

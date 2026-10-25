@@ -74,7 +74,9 @@ def load_history(path: str | os.PathLike[str], encoding: str = "utf-8") -> tuple
             first, second = validate_operands(row["first"], row["second"])
             expected = selected.execute(first, second)
             result = int(row["result"]) if isinstance(expected, int) else validate_number(row["result"])
-            if result != expected:
+            if result != expected and not (
+                isinstance(expected, float) and any(result == round(expected, places) for places in range(18))
+            ):
                 raise ValueError("result does not match the operation and operands")
             timestamp = datetime.fromisoformat(row["timestamp"])
             if timestamp.tzinfo is None or timestamp.utcoffset() is None:

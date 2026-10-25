@@ -25,6 +25,24 @@ log and history file names resolve under their respective directories;
 absolute file paths are used directly. Loading configuration creates missing
 directories but does not create log or history files.
 
+Pass the loaded configuration to `Calculator` to apply it in programmatic use:
+
+```python
+from app.calculator_config import CalculatorConfig
+from app.calculator import Calculator
+
+calculator = Calculator(config=CalculatorConfig.load())
+```
+
+The maximum input setting limits the absolute magnitude of each operand;
+values exactly at the limit are accepted. Precision means decimal places on
+floating-point results and uses Python's `round` policy (ties to even for
+representable halfway values). Integer division stays an integer and still
+truncates toward zero. Returned results, history entries, logs, and CSV files
+use the rounded result. Loaded or restored records keep their saved results
+and timestamps. A plain `Calculator()` keeps its original unconfigured
+programmatic behavior.
+
 ## Supported functionality
 
 The calculator supports addition, subtraction, multiplication, division, power,
@@ -41,8 +59,8 @@ an operation by name, ignoring surrounding spaces and letter case. Unsupported
 names and zero denominators raise `OperationError`. Numeric strings such as
 `"2.5"` are accepted. Booleans, nonnumeric values, NaN, and infinity raise
 `ValidationError`. Results that overflow or are nonfinite raise
-`OperationError`. All operations use finite real numbers; no input-size limit
-is currently configured.
+`OperationError`. All operations use finite real numbers; input limits apply
+when a configuration is supplied.
 
 `power(a, b)` raises `a` to `b`. A negative base requires an integer exponent;
 `power(0, 0)` returns 1. `root(a, b)` calculates the `b`-th root of `a`.
