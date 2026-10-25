@@ -13,7 +13,13 @@ py -3.12 -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-Copy `.env.example` to `.env` for local settings. The local `.env` is ignored
+Copy `.env.example` to `.env` for local settings:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+The local `.env` is ignored
 by Git. `CalculatorConfig.load()` reads settings when called; importing modules
 does not load configuration or create files. Process environment variables
 override `.env`, explicit `overrides` override both, and absent settings use
@@ -24,6 +30,18 @@ Relative log and history directories resolve from the project root. Relative
 log and history file names resolve under their respective directories;
 absolute file paths are used directly. Loading configuration creates missing
 directories but does not create log or history files.
+
+| Setting | Default | Rule |
+| --- | --- | --- |
+| `CALCULATOR_LOG_DIR` | `logs` | Nonempty directory path |
+| `CALCULATOR_HISTORY_DIR` | `data` | Nonempty directory path |
+| `CALCULATOR_MAX_HISTORY_SIZE` | `1000` | Positive integer |
+| `CALCULATOR_AUTO_SAVE` | `false` | `true` or `false`, case insensitive |
+| `CALCULATOR_PRECISION` | `15` | Nonnegative integer decimal places |
+| `CALCULATOR_MAX_INPUT_VALUE` | `1e308` | Positive finite number |
+| `CALCULATOR_DEFAULT_ENCODING` | `utf-8` | Recognized text encoding |
+| `CALCULATOR_LOG_FILE` | `calculator.log` | Nonempty file path under log directory if relative |
+| `CALCULATOR_HISTORY_FILE` | `history.csv` | Nonempty file path under history directory if relative |
 
 Pass the loaded configuration to `Calculator` to apply it in programmatic use:
 
@@ -76,6 +94,42 @@ divisor's sign. `int_divide(a, b)` truncates the quotient toward zero, making
 `int_divide(-7, 2)` return `-3`. `percent(a, b)` returns `(a / b) * 100`.
 
 ## Usage
+
+Run the interactive calculator from the project directory:
+
+```powershell
+python -m app
+```
+
+Enter `<operation> <first_operand> <second_operand>`. The available operations
+are `add`, `subtract`, `multiply`, `divide`, `power`, `root`, `modulus`,
+`int_divide`, `percent`, and `abs_diff`. The other commands are `history`,
+`clear`, `undo`, `redo`, `save`, `load`, `help`, and `exit`. For example:
+
+```text
+calc> add 2 3
+Result: 5.0
+calc> history
+1. 2026-10-25T12:00:00+00:00 add(2.0, 3.0) = 5.0
+calc> undo
+Undone.
+calc> redo
+Redone.
+calc> save
+History saved.
+calc> exit
+Goodbye.
+```
+
+The history line's timestamp reflects the actual calculation time. `save` and
+`load` use the configured CSV path; neither takes a filename argument. Blank
+lines are ignored. Unknown commands, incorrect operand counts, invalid
+numbers, and unavailable undo/redo report errors and leave the loop running.
+EOF and Ctrl+C at the prompt exit cleanly. Invalid startup settings print a
+configuration error and exit with a nonzero status. Starting the application
+does not automatically load history or write a history CSV.
+
+The operations are also available in Python code:
 
 ```python
 from app.operations import OperationFactory, add, divide, multiply, power, root, subtract

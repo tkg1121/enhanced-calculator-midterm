@@ -8,7 +8,7 @@ from app.calculator_config import CalculatorConfig
 from app.calculator_memento import CalculatorMemento, UndoRedo
 from app.history import History
 from app.history_persistence import load_history, save_history
-from app.exceptions import PersistenceError
+from app.exceptions import ConfigurationError, PersistenceError
 from app.logger import Logger
 from app.observers import AutoSaveObserver, CalculationObserver, LoggingObserver
 
@@ -87,7 +87,7 @@ class Calculator:
         """Persist the current state, including after undo, redo, or clear."""
         path = path if path is not None else self._history_file
         if path is None:
-            raise ValueError("A history file path is required to save history.")
+            raise ConfigurationError("A history file path is required to save history.")
         try:
             save_history(self.history, path, self._encoding if encoding is None else encoding)
         except PersistenceError as error:
@@ -101,7 +101,7 @@ class Calculator:
         """Replace history and start a fresh undo/redo baseline after validation."""
         path = path if path is not None else self._history_file
         if path is None:
-            raise ValueError("A history file path is required to load history.")
+            raise ConfigurationError("A history file path is required to load history.")
         try:
             entries = load_history(path, self._encoding if encoding is None else encoding)
         except PersistenceError as error:

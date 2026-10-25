@@ -4,7 +4,7 @@ import pytest
 
 from app.calculator import Calculator
 from app.calculator_config import CalculatorConfig
-from app.exceptions import OperationError, PersistenceError, ValidationError
+from app.exceptions import ConfigurationError, OperationError, PersistenceError, ValidationError
 
 
 def configured(tmp_path, **overrides):
@@ -106,9 +106,9 @@ def test_explicit_constructor_values_override_configured_files_and_auto_save(tmp
 
 def test_missing_manual_history_path_has_clear_error():
     calculator = Calculator()
-    with pytest.raises(ValueError, match="history file path"):
+    with pytest.raises(ConfigurationError, match="history file path"):
         calculator.save_history()
-    with pytest.raises(ValueError, match="history file path"):
+    with pytest.raises(ConfigurationError, match="history file path"):
         calculator.load_history()
 
 
