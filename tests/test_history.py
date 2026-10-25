@@ -35,3 +35,13 @@ def test_clear_reports_whether_history_changed():
     history.append(Calculation.create("add", 2, 3))
     assert history.clear() is True
     assert history.entries() == ()
+
+
+def test_bounded_history_keeps_newest_entries_on_append_and_restore():
+    history = History(max_size=2)
+    entries = tuple(Calculation.create("add", value, 1) for value in (1, 2, 3))
+    for entry in entries:
+        history.append(entry)
+    assert history.entries() == entries[1:]
+    history.restore(entries)
+    assert history.entries() == entries[1:]

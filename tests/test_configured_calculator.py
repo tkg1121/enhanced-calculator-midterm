@@ -4,7 +4,7 @@ import pytest
 
 from app.calculator import Calculator
 from app.calculator_config import CalculatorConfig
-from app.exceptions import OperationError, ValidationError
+from app.exceptions import OperationError, PersistenceError, ValidationError
 
 
 def configured(tmp_path, **overrides):
@@ -110,3 +110,58 @@ def test_missing_manual_history_path_has_clear_error():
         calculator.save_history()
     with pytest.raises(ValueError, match="history file path"):
         calculator.load_history()
+
+
+def test_history_limit_keeps_newest_and_undo_redo_restore_bounded_snapshots(tmp_path):
+    calculator = Calculator(config=configured(tmp_path, CALCULATOR_MAX_HISTORY_SIZE="2"))
+    calculator.calculate("add", 1, 1)
+    calculator.calculate("add", 2, 1)
+    before = calculator.history
+    calculator.calculate("add", 3, 1)
+    after = calculator.history
+    assert [entry.result for entry in after] == [3, 4]
+    calculator.undo()
+    assert calculator.history == before
+    calculator.redo()
+    assert calculator.history == after
+    calculator.undo()
+    calculator.calculate("subtract", 8, 1)
+    assert [entry.result for entry in calculator.history] == [3, 7]
+    with pytest.raises(OperationError, match="Nothing to redo"):
+        calculator.redo()
+
+
+def test_failed_calculation_does_not_trim_full_history_or_change_redo(tmp_path):
+    calculator = Calculator(config=configured(tmp_path, CALCULATOR_MAX_HISTORY_SIZE="2"))
+    for value in (1, 2, 3):
+        calculator.calculate("add", value, 1)
+    calculator.undo()
+    before = calculator.history
+    with pytest.raises(OperationError):
+        calculator.calculate("divide", 1, 0)
+    assert calculator.history == before
+    calculator.redo()
+    assert [entry.result for entry in calculator.history] == [3, 4]
+
+
+def test_loading_validates_all_rows_before_applying_history_limit(tmp_path):
+    source = Calculator()
+    for value in (1, 2, 3):
+        source.calculate("add", value, 1)
+    path = tmp_path / "incoming.csv"
+    source.save_history(path)
+    target = Calculator(config=configured(tmp_path, CALCULATOR_MAX_HISTORY_SIZE="2"))
+    target.calculate("multiply", 2, 3)
+    target.load_history(path)
+    assert target.history == source.history[1:]
+    with pytest.raises(OperationError, match="Nothing to undo"):
+        target.undo()
+
+    content = path.read_text(encoding="utf-8").replace("add,1.0", "unknown,1.0", 1)
+    path.write_text(content, encoding="utf-8")
+    before = target.history
+    with pytest.raises(PersistenceError, match="row 2"):
+        target.load_history(path)
+    assert target.history == before
+    with pytest.raises(OperationError, match="Nothing to undo"):
+        target.undo()

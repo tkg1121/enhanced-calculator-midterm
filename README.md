@@ -42,6 +42,11 @@ truncates toward zero. Returned results, history entries, logs, and CSV files
 use the rounded result. Loaded or restored records keep their saved results
 and timestamps. A plain `Calculator()` keeps its original unconfigured
 programmatic behavior.
+`CALCULATOR_MAX_HISTORY_SIZE` keeps the newest calculation entries when the
+current history exceeds its limit. Undo restores the bounded state from before
+the latest action; the setting does not limit the undo and redo stacks. Loading
+validates the entire CSV before keeping its newest entries and starting a new
+undo/redo baseline.
 
 ## Supported functionality
 

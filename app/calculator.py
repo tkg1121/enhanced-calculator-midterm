@@ -31,7 +31,7 @@ class Calculator:
         encoding = encoding if encoding is not None else config.encoding if config is not None else "utf-8"
         if auto_save and history_file is None:
             raise ValueError("A history_file path is required when auto_save is enabled.")
-        self._history = History()
+        self._history = History(config.max_history_size if config is not None else None)
         self._states = UndoRedo()
         self._observers: list[CalculationObserver] = []
         self._encoding = encoding
