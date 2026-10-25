@@ -15,3 +15,7 @@ class OperationError(CalculatorError):
 
 class PersistenceError(CalculatorError):
     """History could not be saved or loaded."""
+
+
+class ConfigurationError(CalculatorError):
+    """A calculator setting is invalid or cannot be used."""

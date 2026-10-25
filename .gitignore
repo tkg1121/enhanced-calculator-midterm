@@ -4,5 +4,10 @@ __pycache__/
 .coverage
 htmlcov/
 .env
+.env.*
+!.env.example
 *.log
+*.csv
+*.tmp
 data/
+logs/

@@ -13,6 +13,18 @@ py -3.12 -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
+Copy `.env.example` to `.env` for local settings. The local `.env` is ignored
+by Git. `CalculatorConfig.load()` reads settings when called; importing modules
+does not load configuration or create files. Process environment variables
+override `.env`, explicit `overrides` override both, and absent settings use
+the defaults in `.env.example`. Invalid supplied values raise
+`ConfigurationError`.
+
+Relative log and history directories resolve from the project root. Relative
+log and history file names resolve under their respective directories;
+absolute file paths are used directly. Loading configuration creates missing
+directories but does not create log or history files.
+
 ## Supported functionality
 
 The calculator supports addition, subtraction, multiplication, division, power,
