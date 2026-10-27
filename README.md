@@ -1,11 +1,14 @@
 # Enhanced Calculator Midterm
 
-A Python calculator with two-operand arithmetic operations.
+A command-line Python calculator with ten two-operand operations, calculation
+history, undo/redo, file logging, optional automatic CSV saving, and
+color-coded interactive output. Settings come from `.env`, and the test suite
+runs in GitHub Actions.
 
 ## Installation
 
-Use Python 3.12 or newer. From the project directory, create a virtual
-environment and install the dependencies:
+Python 3.12 is used by the CI workflow. From the project directory, create a
+virtual environment and install the dependencies:
 
 ```powershell
 py -3.12 -m venv .venv
@@ -13,18 +16,20 @@ py -3.12 -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
+On macOS or Linux, use `python3.12 -m venv .venv`,
+`source .venv/bin/activate`, and the same `python -m pip install` command.
+
 Copy `.env.example` to `.env` for local settings:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-The local `.env` is ignored
-by Git. `CalculatorConfig.load()` reads settings when called; importing modules
-does not load configuration or create files. Process environment variables
-override `.env`, explicit `overrides` override both, and absent settings use
-the defaults in `.env.example`. Invalid supplied values raise
-`ConfigurationError`.
+The local `.env` is ignored by Git. `CalculatorConfig.load()` reads settings
+when called; importing modules does not load configuration or create files.
+Process environment variables override `.env`, explicit `overrides` override
+both, and absent settings use the defaults in `.env.example`. Invalid supplied
+values raise `ConfigurationError`.
 
 Relative log and history directories resolve from the project root. Relative
 log and history file names resolve under their respective directories;
@@ -59,12 +64,11 @@ representable halfway values). Integer division stays an integer and still
 truncates toward zero. Returned results, history entries, logs, and CSV files
 use the rounded result. Loaded or restored records keep their saved results
 and timestamps. A plain `Calculator()` keeps its original unconfigured
-programmatic behavior.
-`CALCULATOR_MAX_HISTORY_SIZE` keeps the newest calculation entries when the
-current history exceeds its limit. Undo restores the bounded state from before
-the latest action; the setting does not limit the undo and redo stacks. Loading
-validates the entire CSV before keeping its newest entries and starting a new
-undo/redo baseline.
+programmatic behavior. `CALCULATOR_MAX_HISTORY_SIZE` keeps the newest
+calculation entries when the current history exceeds its limit. Undo restores
+the bounded state from before the latest action; the setting does not limit
+the undo and redo stacks. Loading validates the entire CSV before keeping its
+newest entries and starting a new undo/redo baseline.
 
 ## Supported functionality
 
@@ -128,6 +132,13 @@ numbers, and unavailable undo/redo report errors and leave the loop running.
 EOF and Ctrl+C at the prompt exit cleanly. Invalid startup settings print a
 configuration error and exit with a nonzero status. Starting the application
 does not automatically load history or write a history CSV.
+
+Interactive terminal output uses Colorama: results are green, errors are red,
+warnings and usage hints are yellow, and help headings are cyan. Every message
+retains its text label and resets styling. Redirected output and noninteractive
+runs are plain by default. Programmatic callers of `run_repl()` or `main()` can
+pass `color=True` or `color=False` to make the choice explicit. Color codes are
+never stored in calculation records, CSV history, or log files.
 
 The operations are also available in Python code:
 
@@ -226,6 +237,14 @@ successful calculations; undo, redo, clear, and load leave the last saved file
 alone until another calculation or manual save. If auto-save fails, the
 calculation remains in history, other observers still run, and a warning is
 emitted. Passing `auto_save=True` without `history_file` raises `ValueError`.
+
+## Design patterns
+
+`OperationFactory` in `app/operations.py` creates the requested arithmetic
+operation. `CalculatorMemento` and `UndoRedo` in `app/calculator_memento.py`
+hold history snapshots for undo and redo. `Calculator` registers and notifies
+`LoggingObserver` and `AutoSaveObserver` in `app/observers.py` after each
+successful calculation. Terminal colors are applied only in `app/repl.py`.
 
 ## Testing
 
