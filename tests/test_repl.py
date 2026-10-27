@@ -16,6 +16,14 @@ def configured(tmp_path, **overrides):
     return CalculatorConfig.load(base_dir=tmp_path, environ={}, overrides=overrides)
 
 
+def isolated_env(tmp_path):
+    env = os.environ.copy()
+    env.update(DEFAULTS)
+    env["CALCULATOR_LOG_DIR"] = str(tmp_path / "logs")
+    env["CALCULATOR_HISTORY_DIR"] = str(tmp_path / "data")
+    return env
+
+
 def run_lines(calculator, lines):
     output = []
     commands = iter(lines)
@@ -139,13 +147,10 @@ def test_invalid_startup_configuration_returns_nonzero(tmp_path, monkeypatch, ca
 
 
 def test_module_entry_point_runs_with_isolated_paths(tmp_path):
-    env = os.environ.copy()
-    env.update(DEFAULTS)
-    env["CALCULATOR_LOG_DIR"] = str(tmp_path / "logs")
-    env["CALCULATOR_HISTORY_DIR"] = str(tmp_path / "data")
+    env = isolated_env(tmp_path)
     completed = subprocess.run(
         [sys.executable, "-m", "app"], input="add 2 3\nexit\n", text=True,
-        capture_output=True, env=env, check=False,
+        capture_output=True, env=env, check=False, timeout=20,
     )
     assert completed.returncode == 0
     assert "Result: 5.0" in completed.stdout
@@ -163,15 +168,45 @@ def test_startup_does_not_replace_existing_history_file(tmp_path):
 
 
 def test_module_entry_point_rejects_invalid_configuration(tmp_path):
-    env = os.environ.copy()
-    env.update(DEFAULTS)
-    env["CALCULATOR_LOG_DIR"] = str(tmp_path / "logs")
-    env["CALCULATOR_HISTORY_DIR"] = str(tmp_path / "data")
+    env = isolated_env(tmp_path)
     env["CALCULATOR_PRECISION"] = "invalid"
     completed = subprocess.run(
         [sys.executable, "-m", "app"], input="", text=True,
-        capture_output=True, env=env, check=False,
+        capture_output=True, env=env, check=False, timeout=20,
     )
     assert completed.returncode != 0
     assert "Configuration error" in completed.stderr
     assert "CALCULATOR_PRECISION" in completed.stderr
+
+
+def test_module_entry_point_recovers_after_save_load_and_errors(tmp_path):
+    env = isolated_env(tmp_path)
+    commands = "\n".join((
+        "add 2 3", "multiply 4 5", "history", "undo", "redo", "save",
+        "clear", "history", "load", "not_a_command", "divide 1 0",
+        "subtract 10 3", "history", "exit", "",
+    ))
+    completed = subprocess.run(
+        [sys.executable, "-m", "app"], input=commands, text=True,
+        capture_output=True, env=env, check=False, timeout=20,
+    )
+    assert completed.returncode == 0
+    output = completed.stdout
+    assert output.index("Result: 5.0") < output.index("Result: 20.0")
+    assert "multiply(4.0, 5.0) = 20.0" in output
+    assert output.index("Undone.") < output.index("Redone.") < output.index("History saved.")
+    assert "History cleared." in output
+    assert "History is empty." in output
+    assert "History loaded." in output
+    assert "Unknown command: not_a_command" in output
+    assert "Cannot divide by zero" in output
+    assert output.index("Cannot divide by zero") < output.index("Result: 7.0")
+    assert output.count("subtract(10.0, 3.0) = 7.0") == 1
+    assert "Goodbye." in output
+    assert completed.stderr == ""
+
+    saved = Calculator()
+    saved.load_history(tmp_path / "data" / "history.csv")
+    assert [(entry.operation, entry.result) for entry in saved.history] == [
+        ("add", 5.0), ("multiply", 20.0),
+    ]
