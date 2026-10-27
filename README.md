@@ -231,5 +231,11 @@ emitted. Passing `auto_save=True` without `history_file` raises `ValueError`.
 
 ```powershell
 python -m pytest
-python -m pytest --cov=app --cov-report=term-missing
+python -m pytest --cov=app --cov-branch --cov-report=term-missing --cov-report=xml --cov-fail-under=90
 ```
+
+The second command measures statement and branch coverage across `app/` and
+fails below 90% total coverage. It writes `coverage.xml`, which is ignored by
+Git. The GitHub Actions workflow runs the same command on pushes to `main` and
+pull requests targeting `main`, using Python 3.12 after installing
+`requirements.txt`. A failing test or coverage below 90% fails the workflow.
